@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sports Preferences Dialog</title>
+	<link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="stylesheet" href="https://pro.fontawesome.com/releases/v5.10.0/css/all.css" <link="">
+ 
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Caveat+Brush&family=Encode+Sans+Condensed:wght@100;200;300;400;500;600;700;800;900&family=Kalam:wght@300;400;700&family=Roboto:ital,wght@0,100..900;1,100..900&family=Source+Sans+3:ital,wght@0,200..900;1,200..900&display=swap" rel="stylesheet">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+			font-family: "Encode Sans Condensed", sans-serif;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            /*background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); */
+			
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .demo-content {
+            background: #EFF9F2; /* linear-gradient(135deg, #f1f1ff 0%, #f4f4ff 100%); */
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            text-align: center;
+            max-width: 600px;
+            width: 100%;
+        }
+
+        .demo-content h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .demo-content p {
+            color: #343;
+            line-height: 1.6;
+            margin-bottom: 30px;
+			font-size:18px;
+        }
+
+        .trigger-btn {
+            background: #026467; /* linear-gradient(45deg, #ff6b6b, #ee5a24); */
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .trigger-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(1, 1, 1, 0.5);
+        }
+
+        /* Modal Overlay */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* Modal Container */
+        .modal-container {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: slideIn 0.4s ease;
+        }
+
+        @keyframes slideIn {
+            from { 
+                opacity: 0;
+                transform: translate(-50%, -60%);
+            }
+            to { 
+                opacity: 1;
+                transform: translate(-50%, -50%);
+            }
+        }
+
+        /* Modal Header */
+        .modal-header {
+            background: #026467; /* linear-gradient(135deg, #667eea 0%, #764ba2 100%); */
+            color: white;
+            padding: 25px;
+            border-radius: 20px 20px 0 0;
+            text-align: center;
+            position: relative;
+        }
+
+        .modal-header h2 {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+
+        .modal-header p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            transition: opacity 0.3s ease;
+        }
+
+        .close-btn:hover {
+            opacity: 0.7;
+        }
+
+        /* Modal Body */
+        .modal-body {
+            padding: 30px;
+        }
+
+        .form-step {
+            display: none;
+        }
+
+        .form-step.active {
+            display: block;
+            animation: fadeInUp 0.4s ease;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .question {
+            margin-bottom: 30px;
+        }
+
+        .question h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 500;
+        }
+
+        select, input[type="text"] {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e1e8ed;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+            background: white;
+        }
+
+        select:focus, input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .checkbox-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            border: 2px solid #e1e8ed;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .checkbox-item:hover {
+            background: #f8f9ff;
+            border-color: #667eea;
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            margin-right: 10px;
+            transform: scale(1.2);
+        }
+
+        .checkbox-item.checked {
+            background: #e1e8ed; /*linear-gradient(135deg, #667eea 0%, #764ba2 100%); */
+            color: black; /*white; */
+            border-color: #667eea;
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            background: #e1e8ed;
+            height: 6px;
+            border-radius: 3px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(45deg, #038186, #026467); 
+            width: 0%;
+            transition: width 0.4s ease;
+        }
+
+        /* Navigation Buttons */
+        .modal-footer {
+            padding: 20px 30px;
+            border-top: 1px solid #e1e8ed;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 14px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-secondary {
+            background: #f1f3f4;
+            color: #666;
+        }
+
+        .btn-secondary:hover {
+            background: #e8eaed;
+        }
+
+        .btn-primary {
+            background: #026467; /* linear-gradient(45deg, #667eea, #764ba2); */
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Success Message */
+        .success-message {
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .success-icon {
+            font-size: 60px;
+            color: #4caf50;
+            margin-bottom: 20px;
+        }
+
+        .success-message h3 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .success-message p {
+            color: #666;
+            line-height: 1.6;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .modal-container {
+                width: 95%;
+                margin: 10px;
+            }
+
+            .modal-header, .modal-body, .modal-footer {
+                padding: 20px;
+            }
+
+            .checkbox-group {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-content">
+        <h1>Welcome to Sports Central</h1>
+        <p>Discover personalized sports content tailored to your interests. Get news, stats, and updates about your favorite teams and players!</p>
+        <button class="trigger-btn" onclick="openModal()">Tell Us Your Sports Preferences</button>
+    </div>
+
+    <!-- Modal Overlay -->
+    <div id="sportsModal" class="modal-overlay">
+        <div class="modal-container">
+            <!-- Modal Header -->
+            <div class="modal-header">
+                <button class="close-btn" onclick="closeModal()">&times;</button>
+                <h2>Sports Preferences</h2>
+                <p>Help us personalize your experience</p>
+            </div>
+
+            <!-- Progress Bar -->
+            <div class="progress-container">
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="modal-body">
+                <form id="sportsForm">
+                    <!-- Step 1: NFL Team -->
+                    <div class="form-step active" data-step="1">
+                        <div class="question">
+                            <h3>Which NFL Team is your favorite?</h3>
+                            <div class="form-group">
+                                <select name="nflTeam" required>
+                                    <option value="">Select your team...</option>
+                                    <option value="arizona-cardinals">Arizona Cardinals</option>
+                                    <option value="atlanta-falcons">Atlanta Falcons</option>
+                                    <option value="baltimore-ravens">Baltimore Ravens</option>
+                                    <option value="buffalo-bills">Buffalo Bills</option>
+                                    <option value="carolina-panthers">Carolina Panthers</option>
+                                    <option value="chicago-bears">Chicago Bears</option>
+                                    <option value="cincinnati-bengals">Cincinnati Bengals</option>
+                                    <option value="cleveland-browns">Cleveland Browns</option>
+                                    <option value="dallas-cowboys">Dallas Cowboys</option>
+                                    <option value="denver-broncos">Denver Broncos</option>
+                                    <option value="detroit-lions">Detroit Lions</option>
+                                    <option value="green-bay-packers">Green Bay Packers</option>
+                                    <option value="houston-texans">Houston Texans</option>
+                                    <option value="indianapolis-colts">Indianapolis Colts</option>
+                                    <option value="jacksonville-jaguars">Jacksonville Jaguars</option>
+                                    <option value="kansas-city-chiefs">Kansas City Chiefs</option>
+                                    <option value="las-vegas-raiders">Las Vegas Raiders</option>
+                                    <option value="los-angeles-chargers">Los Angeles Chargers</option>
+                                    <option value="los-angeles-rams">Los Angeles Rams</option>
+                                    <option value="miami-dolphins">Miami Dolphins</option>
+                                    <option value="minnesota-vikings">Minnesota Vikings</option>
+                                    <option value="new-england-patriots">New England Patriots</option>
+                                    <option value="new-orleans-saints">New Orleans Saints</option>
+                                    <option value="new-york-giants">New York Giants</option>
+                                    <option value="new-york-jets">New York Jets</option>
+                                    <option value="philadelphia-eagles">Philadelphia Eagles</option>
+                                    <option value="pittsburgh-steelers">Pittsburgh Steelers</option>
+                                    <option value="san-francisco-49ers">San Francisco 49ers</option>
+                                    <option value="seattle-seahawks">Seattle Seahawks</option>
+                                    <option value="tampa-bay-buccaneers">Tampa Bay Buccaneers</option>
+                                    <option value="tennessee-titans">Tennessee Titans</option>
+                                    <option value="washington-commanders">Washington Commanders</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 2: NBA Team -->
+                    <div class="form-step" data-step="2">
+                        <div class="question">
+                            <h3>Which NBA Team is your favorite?</h3>
+                            <div class="form-group">
+                                <select name="nbaTeam" required>
+                                    <option value="">Select your team...</option>
+                                    <option value="atlanta-hawks">Atlanta Hawks</option>
+                                    <option value="boston-celtics">Boston Celtics</option>
+                                    <option value="brooklyn-nets">Brooklyn Nets</option>
+                                    <option value="charlotte-hornets">Charlotte Hornets</option>
+                                    <option value="chicago-bulls">Chicago Bulls</option>
+                                    <option value="cleveland-cavaliers">Cleveland Cavaliers</option>
+                                    <option value="dallas-mavericks">Dallas Mavericks</option>
+                                    <option value="denver-nuggets">Denver Nuggets</option>
+                                    <option value="detroit-pistons">Detroit Pistons</option>
+                                    <option value="golden-state-warriors">Golden State Warriors</option>
+                                    <option value="houston-rockets">Houston Rockets</option>
+                                    <option value="indiana-pacers">Indiana Pacers</option>
+                                    <option value="la-clippers">LA Clippers</option>
+                                    <option value="los-angeles-lakers">Los Angeles Lakers</option>
+                                    <option value="memphis-grizzlies">Memphis Grizzlies</option>
+                                    <option value="miami-heat">Miami Heat</option>
+                                    <option value="milwaukee-bucks">Milwaukee Bucks</option>
+                                    <option value="minnesota-timberwolves">Minnesota Timberwolves</option>
+                                    <option value="new-orleans-pelicans">New Orleans Pelicans</option>
+                                    <option value="new-york-knicks">New York Knicks</option>
+                                    <option value="oklahoma-city-thunder">Oklahoma City Thunder</option>
+                                    <option value="orlando-magic">Orlando Magic</option>
+                                    <option value="philadelphia-76ers">Philadelphia 76ers</option>
+                                    <option value="phoenix-suns">Phoenix Suns</option>
+                                    <option value="portland-trail-blazers">Portland Trail Blazers</option>
+                                    <option value="sacramento-kings">Sacramento Kings</option>
+                                    <option value="san-antonio-spurs">San Antonio Spurs</option>
+                                    <option value="toronto-raptors">Toronto Raptors</option>
+                                    <option value="utah-jazz">Utah Jazz</option>
+                                    <option value="washington-wizards">Washington Wizards</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 3: Other Sports -->
+                    <div class="form-step" data-step="3">
+                        <div class="question">
+                            <h3>Do you follow any other sports?</h3>
+                            <div class="checkbox-group">
+                                <div class="checkbox-item">
+                                    <input type="checkbox" name="otherSports" value="baseball" id="baseball">
+                                    <label for="baseball">Baseball (MLB)</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" name="otherSports" value="hockey" id="hockey">
+                                    <label for="hockey">Hockey (NHL)</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" name="otherSports" value="soccer" id="soccer">
+                                    <label for="soccer">Soccer (MLS/EPL)</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" name="otherSports" value="tennis" id="tennis">
+                                    <label for="tennis">Tennis</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" name="otherSports" value="golf" id="golf">
+                                    <label for="golf">Golf</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" name="otherSports" value="motorsports" id="motorsports">
+                                    <label for="motorsports">Motorsports</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 4: NFL Players -->
+                    <div class="form-step" data-step="4">
+                        <div class="question">
+                            <h3>Who are your favorite NFL players?</h3>
+                            
+                            <div class="form-group">
+                                <label for="favoriteQB">Favorite Quarterback (QB):</label>
+                                <input type="text" name="favoriteQB" id="favoriteQB" placeholder="e.g., Patrick Mahomes, Josh Allen">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="favoriteRB">Favorite Running Back (RB):</label>
+                                <input type="text" name="favoriteRB" id="favoriteRB" placeholder="e.g., Christian McCaffrey, Derrick Henry">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="favoriteWR">Favorite Wide Receiver (WR):</label>
+                                <input type="text" name="favoriteWR" id="favoriteWR" placeholder="e.g., Tyreek Hill, Davante Adams">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 5: Basketball Players -->
+                    <div class="form-step" data-step="5">
+                        <div class="question">
+                            <h3>Who are your favorite basketball players?</h3>
+                            
+                            <div class="form-group">
+                                <label for="favoriteBBPlayers">Favorite NBA Players (separate multiple with commas):</label>
+                                <input type="text" name="favoriteBBPlayers" id="favoriteBBPlayers" placeholder="e.g., LeBron James, Stephen Curry, Giannis Antetokounmpo">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Success Step -->
+                    <div class="form-step" data-step="6">
+                        <div class="success-message">
+                            <div class="success-icon">✅</div>
+                            <h3>Thank you!</h3>
+                            <p>Your sports preferences have been saved successfully. We'll use this information to personalize your experience and show you content about your favorite teams and players.</p>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="prevBtn" onclick="previousStep()">Previous</button>
+                <div id="stepIndicator">Step 1 of 5</div>
+                <button type="button" class="btn btn-primary" id="nextBtn" onclick="nextStep()">Next</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentStep = 1;
+        const totalSteps = 5;
+        const userPreferences = {};
+
+        function openModal() {
+            document.getElementById('sportsModal').style.display = 'block';
+            document.body.style.overflow = 'hidden'; // Prevent background scrolling
+        }
+
+        function closeModal() {
+            document.getElementById('sportsModal').style.display = 'none';
+            document.body.style.overflow = 'auto'; // Restore scrolling
+        }
+
+        function updateProgress() {
+            const progress = (currentStep / totalSteps) * 100;
+            document.getElementById('progressBar').style.width = progress + '%';
+        }
+
+        function updateStepIndicator() {
+            const indicator = document.getElementById('stepIndicator');
+            if (currentStep <= totalSteps) {
+                indicator.textContent = `Step ${currentStep} of ${totalSteps}`;
+            } else {
+                indicator.textContent = 'Complete';
+            }
+        }
+
+        function showStep(step) {
+            // Hide all steps
+            const steps = document.querySelectorAll('.form-step');
+            steps.forEach(s => s.classList.remove('active'));
+            
+            // Show current step
+            const currentStepElement = document.querySelector(`[data-step="${step}"]`);
+            if (currentStepElement) {
+                currentStepElement.classList.add('active');
+            }
+
+            // Update navigation buttons
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            
+            prevBtn.style.display = step > 1 ? 'block' : 'none';
+            
+            if (step < totalSteps) {
+                nextBtn.textContent = 'Next';
+                nextBtn.onclick = nextStep;
+            } else if (step === totalSteps) {
+                nextBtn.textContent = 'Submit';
+                nextBtn.onclick = submitForm;
+            } else {
+                nextBtn.style.display = 'none';
+            }
+
+            updateProgress();
+            updateStepIndicator();
+        }
+
+        function nextStep() {
+            if (validateCurrentStep()) {
+                saveCurrentStepData();
+                currentStep++;
+                showStep(currentStep);
+            }
+        }
+
+        function previousStep() {
+            if (currentStep > 1) {
+                currentStep--;
+                showStep(currentStep);
+            }
+        }
+
+        function validateCurrentStep() {
+            const currentStepElement = document.querySelector(`[data-step="${currentStep}"]`);
+            const requiredFields = currentStepElement.querySelectorAll('[required]');
+            
+            for (let field of requiredFields) {
+                if (!field.value.trim()) {
+                    field.focus();
+                    alert('Please fill in all required fields before continuing.');
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        function saveCurrentStepData() {
+            const form = document.getElementById('sportsForm');
+            const formData = new FormData(form);
+            
+            for (let [key, value] of formData.entries()) {
+                if (key === 'otherSports') {
+                    if (!userPreferences.otherSports) {
+                        userPreferences.otherSports = [];
+                    }
+                    userPreferences.otherSports.push(value);
+                } else {
+                    userPreferences[key] = value;
+                }
+            }
+        }
+
+        function submitForm() {
+            saveCurrentStepData();
+            
+            // Save to cookies (in a real app, you might send this to a server)
+            document.cookie = `sportsPreferences=${JSON.stringify(userPreferences)};expires=${new Date(Date.now() + 30*24*60*60*1000).toUTCString()};path=/`;
+            
+            console.log('User Preferences Saved:', userPreferences);
+            
+            // Show success step
+            currentStep++;
+            showStep(currentStep);
+            
+            // Auto close after 3 seconds
+            setTimeout(() => {
+                closeModal();
+            }, 3000);
+        }
+
+        // Handle checkbox styling
+        document.addEventListener('change', function(e) {
+            if (e.target.type === 'checkbox') {
+                const checkboxItem = e.target.closest('.checkbox-item');
+                if (e.target.checked) {
+                    checkboxItem.classList.add('checked');
+                } else {
+                    checkboxItem.classList.remove('checked');
+                }
+            }
+        });
+
+        // Close modal when clicking outside
+        document.getElementById('sportsModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+
+        // Handle ESC key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeModal();
+            }
+        });
+
+        // Initialize
+        showStep(1);
+
+        // Check if user already has preferences saved
+        window.addEventListener('load', function() {
+            const savedPreferences = getCookie('sportsPreferences');
+            if (savedPreferences) {
+                console.log('Existing preferences found:', JSON.parse(savedPreferences));
+                // You could use this to pre-populate the form or skip the popup
+            }
+        });
+
+        function getCookie(name) {
+            const nameEQ = name + "=";
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                let cookie = cookies[i].trim();
+                if (cookie.indexOf(nameEQ) === 0) {
+                    return cookie.substring(nameEQ.length);
+                }
+            }
+            return null;
+        }
+    </script>
+</body>
+</html>

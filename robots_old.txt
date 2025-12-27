@@ -1,0 +1,11 @@
+User-agent: *
+
+Allow: /*.html$
+
+Disallow: /*.pdf$
+Disallow: /*.jpg$
+Disallow: /*.png$
+Disallow: /*.css$
+Disallow: /*.js$
+Disallow: /*.xml$
+Disallow: /*.php$

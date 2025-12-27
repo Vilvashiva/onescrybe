@@ -1,0 +1,10 @@
+User-agent: *
+Disallow: /
+Disallow: /admin/
+Disallow: /private/
+
+Allow: /*.html$
+Allow: /assets/
+Allow: /css/
+Allow: /js/
+Allow: /images/

@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NBA Player Comparison</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: #2c3e50;
+            font-size: 2.5em;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #7f8c8d;
+            font-size: 1.1em;
+        }
+
+        .player-selectors {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 40px;
+            padding: 20px;
+            background: rgba(52, 152, 219, 0.1);
+            border-radius: 15px;
+        }
+
+        .player-selector {
+            text-align: center;
+        }
+
+        .player-selector label {
+            display: block;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+
+        .player-selector select {
+            width: 100%;
+            padding: 12px 15px;
+            font-size: 16px;
+            border: 2px solid #bdc3c7;
+            border-radius: 10px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .player-selector select:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 10px rgba(52, 152, 219, 0.3);
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            margin-top: 30px;
+        }
+
+        .chart-container {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            border: 1px solid #ecf0f1;
+        }
+
+        .chart-title {
+            text-align: center;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+
+        .chart-canvas {
+            position: relative;
+            height: 300px;
+        }
+
+        @media (max-width: 1024px) {
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .player-selectors {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+        }
+
+        .no-data {
+            text-align: center;
+            color: #95a5a6;
+            font-style: italic;
+            padding: 50px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏀 NBA Player Comparison</h1>
+            <p>Compare performance metrics between two players across their careers</p>
+        </div>
+
+        <div class="player-selectors">
+            <div class="player-selector">
+                <label for="player1">Player 1</label>
+                <select id="player1">
+                    <option value="">Select Player 1</option>
+                </select>
+            </div>
+            <div class="player-selector">
+                <label for="player2">Player 2</label>
+                <select id="player2">
+                    <option value="">Select Player 2</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="charts-grid">
+            <div class="chart-container">
+                <div class="chart-title">Points Per Game</div>
+                <div class="chart-canvas">
+                    <canvas id="ptsChart"></canvas>
+                </div>
+            </div>
+            <div class="chart-container">
+                <div class="chart-title">Field Goal Percentage</div>
+                <div class="chart-canvas">
+                    <canvas id="fgChart"></canvas>
+                </div>
+            </div>
+            <div class="chart-container">
+                <div class="chart-title">Three Point Percentage</div>
+                <div class="chart-canvas">
+                    <canvas id="threepChart"></canvas>
+                </div>
+            </div>
+            <div class="chart-container">
+                <div class="chart-title">Free Throw Percentage</div>
+                <div class="chart-canvas">
+                    <canvas id="ftChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Player data
+        const playersData = {
+            'Nikola Jokic': [
+                { season: "2003-04", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2004-05", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2005-06", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2006-07", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2007-08", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2008-09", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2009-10", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2010-11", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2011-12", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2012-13", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2013-14", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2014-15", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2015-16", PTS: 10.0, FG: 0.512, ThreeP: 0.333, FT: 0.813 },
+                { season: "2016-17", PTS: 16.7, FG: 0.578, ThreeP: 0.324, FT: 0.823 },
+                { season: "2017-18", PTS: 18.5, FG: 0.499, ThreeP: 0.396, FT: 0.850 },
+                { season: "2018-19", PTS: 20.1, FG: 0.511, ThreeP: 0.307, FT: 0.821 },
+                { season: "2019-20", PTS: 19.9, FG: 0.528, ThreeP: 0.314, FT: 0.817 },
+                { season: "2020-21", PTS: 26.4, FG: 0.566, ThreeP: 0.388, FT: 0.868 },
+                { season: "2021-22", PTS: 27.1, FG: 0.583, ThreeP: 0.337, FT: 0.810 },
+                { season: "2022-23", PTS: 24.5, FG: 0.632, ThreeP: 0.382, FT: 0.829 },
+                { season: "2023-24", PTS: 26.4, FG: 0.583, ThreeP: 0.356, FT: 0.817 },
+                { season: "2024-25", PTS: 29.6, FG: 0.577, ThreeP: 0.417, FT: 0.825 }
+            ],
+            'Giannis Antetokounmpo': [
+                { season: "2003-04", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2004-05", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2005-06", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2006-07", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2007-08", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2008-09", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2009-10", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2010-11", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2011-12", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 }, 
+                { season: "2012-13", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },           
+                { season: "2013-14", PTS: 6.8, FG: 0.414, ThreeP: 0.000, FT: 0.683 },
+                { season: "2014-15", PTS: 12.7, FG: 0.491, ThreeP: 0.159, FT: 0.741 },
+                { season: "2015-16", PTS: 16.9, FG: 0.506, ThreeP: 0.256, FT: 0.724 },
+                { season: "2016-17", PTS: 22.9, FG: 0.521, ThreeP: 0.272, FT: 0.770 },
+                { season: "2017-18", PTS: 26.9, FG: 0.529, ThreeP: 0.307, FT: 0.760 },
+                { season: "2018-19", PTS: 27.7, FG: 0.578, ThreeP: 0.256, FT: 0.729 },
+                { season: "2019-20", PTS: 29.5, FG: 0.553, ThreeP: 0.304, FT: 0.633 },
+                { season: "2020-21", PTS: 28.1, FG: 0.569, ThreeP: 0.301, FT: 0.685 },
+                { season: "2021-22", PTS: 29.9, FG: 0.553, ThreeP: 0.293, FT: 0.719 },
+                { season: "2022-23", PTS: 31.1, FG: 0.553, ThreeP: 0.277, FT: 0.646 },
+                { season: "2023-24", PTS: 30.4, FG: 0.611, ThreeP: 0.274, FT: 0.657 },
+                { season: "2024-25", PTS: 30.4, FG: 0.601, ThreeP: 0.222, FT: 0.690 }
+            ],
+            'Shai Gilgeous-Alexander': [
+                { season: "2003-04", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2004-05", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2005-06", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2006-07", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2007-08", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2008-09", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2009-10", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2010-11", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2011-12", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2012-13", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2013-14", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2014-15", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2015-16", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2016-17", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2017-18", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+
+                { season: "2018-19", PTS: 10.8, FG: 0.475, ThreeP: 0.367, FT: 0.800 },
+                { season: "2019-20", PTS: 19.0, FG: 0.470, ThreeP: 0.342, FT: 0.834 },
+                { season: "2020-21", PTS: 23.7, FG: 0.509, ThreeP: 0.416, FT: 0.810 },
+                { season: "2021-22", PTS: 24.5, FG: 0.450, ThreeP: 0.350, FT: 0.905 },
+                { season: "2022-23", PTS: 31.4, FG: 0.510, ThreeP: 0.347, FT: 0.905 },
+                { season: "2023-24", PTS: 30.1, FG: 0.535, ThreeP: 0.353, FT: 0.874 },
+                { season: "2024-25", PTS: 32.7, FG: 0.519, ThreeP: 0.375, FT: 0.879 }
+            ],
+            'Luka Doncic': [
+                { season: "2003-04", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2004-05", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2005-06", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2006-07", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2007-08", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2008-09", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2009-10", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2010-11", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2011-12", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2012-13", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2013-14", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2014-15", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2015-16", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2016-17", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2017-18", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+
+                { season: "2018-19", PTS: 21.2, FG: 0.427, ThreeP: 0.327, FT: 0.713 },
+                { season: "2019-20", PTS: 28.8, FG: 0.463, ThreeP: 0.316, FT: 0.758 },
+                { season: "2020-21", PTS: 27.7, FG: 0.479, ThreeP: 0.350, FT: 0.730 },
+                { season: "2021-22", PTS: 28.4, FG: 0.457, ThreeP: 0.352, FT: 0.744 },
+                { season: "2022-23", PTS: 32.4, FG: 0.493, ThreeP: 0.345, FT: 0.743 },
+                { season: "2023-24", PTS: 33.9, FG: 0.487, ThreeP: 0.383, FT: 0.786 },
+                { season: "2024-25", PTS: 29.1, FG: 0.469, ThreeP: 0.361, FT: 0.775 }
+            ],
+            'Anthony Davis': [
+                { season: "2003-04", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2004-05", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2005-06", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2006-07", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2007-08", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2008-09", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2009-10", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2010-11", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2011-12", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+
+                { season: "2012-13", PTS: 13.5, FG: 0.516, ThreeP: 0.000, FT: 0.751 },
+                { season: "2013-14", PTS: 20.8, FG: 0.519, ThreeP: 0.000, FT: 0.791 },
+                { season: "2014-15", PTS: 24.4, FG: 0.535, ThreeP: 0.000, FT: 0.805 },
+                { season: "2015-16", PTS: 24.3, FG: 0.495, ThreeP: 0.000, FT: 0.758 },
+                { season: "2016-17", PTS: 28.0, FG: 0.505, ThreeP: 0.299, FT: 0.802 },
+                { season: "2017-18", PTS: 25.5, FG: 0.534, ThreeP: 0.340, FT: 0.828 },
+                { season: "2018-19", PTS: 25.9, FG: 0.517, ThreeP: 0.331, FT: 0.794 },
+                { season: "2019-20", PTS: 26.1, FG: 0.503, ThreeP: 0.330, FT: 0.846 },
+                { season: "2020-21", PTS: 21.8, FG: 0.491, ThreeP: 0.260, FT: 0.738 },
+                { season: "2021-22", PTS: 23.2, FG: 0.526, ThreeP: 0.186, FT: 0.718 },
+                { season: "2022-23", PTS: 25.9, FG: 0.563, ThreeP: 0.257, FT: 0.783 },
+                { season: "2023-24", PTS: 24.7, FG: 0.555, ThreeP: 0.270, FT: 0.813 },
+                { season: "2024-25", PTS: 24.7, FG: 0.548, ThreeP: 0.290, FT: 0.798 }
+            ],
+            'Cade Cunningham': [
+                { season: "2003-04", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2004-05", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2005-06", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2006-07", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2007-08", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2008-09", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2009-10", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2010-11", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2011-12", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2012-13", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2013-14", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2014-15", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2015-16", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2016-17", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2017-18", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2018-19", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2019-20", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2020-21", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+
+                { season: "2021-22", PTS: 17.4, FG: 0.416, ThreeP: 0.314, FT: 0.842 },
+                { season: "2022-23", PTS: 19.9, FG: 0.435, ThreeP: 0.317, FT: 0.849 },
+                { season: "2023-24", PTS: 22.7, FG: 0.449, ThreeP: 0.357, FT: 0.863 },
+                { season: "2024-25", PTS: 23.5, FG: 0.456, ThreeP: 0.368, FT: 0.875 }
+            ],
+            'Jayson Tatum': [
+                { season: "2003-04", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2004-05", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2005-06", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2006-07", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2007-08", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2008-09", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2009-10", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2010-11", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2011-12", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2012-13", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2013-14", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2014-15", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2015-16", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2016-17", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+
+                { season: "2017-18", PTS: 13.9, FG: 0.475, ThreeP: 0.434, FT: 0.826 },
+                { season: "2018-19", PTS: 15.7, FG: 0.450, ThreeP: 0.373, FT: 0.855 },
+                { season: "2019-20", PTS: 23.4, FG: 0.450, ThreeP: 0.403, FT: 0.812 },
+                { season: "2020-21", PTS: 26.4, FG: 0.457, ThreeP: 0.386, FT: 0.868 },
+                { season: "2021-22", PTS: 26.9, FG: 0.453, ThreeP: 0.353, FT: 0.853 },
+                { season: "2022-23", PTS: 30.1, FG: 0.466, ThreeP: 0.348, FT: 0.853 },
+                { season: "2023-24", PTS: 26.9, FG: 0.473, ThreeP: 0.375, FT: 0.835 },
+                { season: "2024-25", PTS: 25.8, FG: 0.458, ThreeP: 0.368, FT: 0.828 }
+            ],
+            'Karl-Anthony Towns': [
+                { season: "2003-04", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2004-05", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2005-06", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2006-07", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2007-08", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2008-09", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2009-10", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2010-11", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2011-12", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2012-13", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2013-14", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2014-15", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+
+                { season: "2015-16", PTS: 18.3, FG: 0.542, ThreeP: 0.341, FT: 0.811 },
+                { season: "2016-17", PTS: 25.1, FG: 0.542, ThreeP: 0.367, FT: 0.832 },
+                { season: "2017-18", PTS: 21.3, FG: 0.545, ThreeP: 0.421, FT: 0.858 },
+                { season: "2018-19", PTS: 24.4, FG: 0.518, ThreeP: 0.401, FT: 0.836 },
+                { season: "2019-20", PTS: 26.5, FG: 0.508, ThreeP: 0.412, FT: 0.796 },
+                { season: "2020-21", PTS: 24.8, FG: 0.486, ThreeP: 0.387, FT: 0.859 },
+                { season: "2021-22", PTS: 24.6, FG: 0.529, ThreeP: 0.410, FT: 0.821 },
+                { season: "2022-23", PTS: 20.8, FG: 0.505, ThreeP: 0.365, FT: 0.874 },
+                { season: "2023-24", PTS: 21.8, FG: 0.505, ThreeP: 0.417, FT: 0.870 },
+                { season: "2024-25", PTS: 24.4, FG: 0.526, ThreeP: 0.420, FT: 0.885 }
+            ],
+            'Domantas Sabonis': [
+                { season: "2003-04", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2004-05", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2005-06", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2006-07", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2007-08", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2008-09", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2009-10", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2010-11", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2011-12", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2012-13", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2013-14", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2014-15", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2015-16", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+
+                { season: "2016-17", PTS: 5.9, FG: 0.399, ThreeP: 0.318, FT: 0.740 },
+                { season: "2017-18", PTS: 11.6, FG: 0.518, ThreeP: 0.309, FT: 0.758 },
+                { season: "2018-19", PTS: 14.1, FG: 0.590, ThreeP: 0.529, FT: 0.710 },
+                { season: "2019-20", PTS: 18.5, FG: 0.539, ThreeP: 0.318, FT: 0.692 },
+                { season: "2020-21", PTS: 20.3, FG: 0.535, ThreeP: 0.321, FT: 0.732 },
+                { season: "2021-22", PTS: 18.9, FG: 0.571, ThreeP: 0.370, FT: 0.712 },
+                { season: "2022-23", PTS: 19.1, FG: 0.615, ThreeP: 0.417, FT: 0.743 },
+                { season: "2023-24", PTS: 19.4, FG: 0.598, ThreeP: 0.375, FT: 0.692 },
+                { season: "2024-25", PTS: 19.1, FG: 0.590, ThreeP: 0.417, FT: 0.725 }
+            ],
+            'Kevin Durant': [
+                { season: "2003-04", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2004-05", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2005-06", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2006-07", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+            
+                { season: "2007-08", PTS: 20.3, FG: 0.430, ThreeP: 0.288, FT: 0.873 },
+                { season: "2008-09", PTS: 25.3, FG: 0.476, ThreeP: 0.422, FT: 0.863 },
+                { season: "2009-10", PTS: 30.1, FG: 0.476, ThreeP: 0.365, FT: 0.900 },
+                { season: "2010-11", PTS: 27.7, FG: 0.462, ThreeP: 0.350, FT: 0.880 },
+                { season: "2011-12", PTS: 28.0, FG: 0.496, ThreeP: 0.387, FT: 0.860 },
+                { season: "2012-13", PTS: 28.1, FG: 0.510, ThreeP: 0.416, FT: 0.905 },
+                { season: "2013-14", PTS: 32.0, FG: 0.503, ThreeP: 0.391, FT: 0.873 },
+                { season: "2014-15", PTS: 25.4, FG: 0.510, ThreeP: 0.403, FT: 0.854 },
+                { season: "2016-17", PTS: 25.1, FG: 0.537, ThreeP: 0.375, FT: 0.875 },
+                { season: "2017-18", PTS: 26.4, FG: 0.516, ThreeP: 0.419, FT: 0.889 },
+                { season: "2018-19", PTS: 26.0, FG: 0.521, ThreeP: 0.353, FT: 0.877 },
+                { season: "2019-20", PTS: 26.8, FG: 0.525, ThreeP: 0.401, FT: 0.881 },
+                { season: "2020-21", PTS: 27.1, FG: 0.540, ThreeP: 0.450, FT: 0.882 },
+                { season: "2021-22", PTS: 29.9, FG: 0.518, ThreeP: 0.383, FT: 0.910 },
+                { season: "2022-23", PTS: 29.1, FG: 0.556, ThreeP: 0.425, FT: 0.913 },
+                { season: "2023-24", PTS: 27.1, FG: 0.523, ThreeP: 0.413, FT: 0.856 },
+                { season: "2024-25", PTS: 28.5, FG: 0.545, ThreeP: 0.398, FT: 0.885 }
+            ],
+            'Trae Young': [
+                 { season: "2003-04", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2004-05", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2005-06", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2006-07", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2007-08", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2008-09", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2009-10", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2010-11", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2011-12", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2012-13", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2013-14", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2014-15", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2015-16", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2016-17", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2017-18", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+
+                { season: "2018-19", PTS: 19.1, FG: 0.418, ThreeP: 0.324, FT: 0.829 },
+                { season: "2019-20", PTS: 29.6, FG: 0.437, ThreeP: 0.361, FT: 0.860 },
+                { season: "2020-21", PTS: 25.3, FG: 0.438, ThreeP: 0.343, FT: 0.886 },
+                { season: "2021-22", PTS: 28.4, FG: 0.460, ThreeP: 0.383, FT: 0.902 },
+                { season: "2022-23", PTS: 26.2, FG: 0.433, ThreeP: 0.371, FT: 0.863 },
+                { season: "2023-24", PTS: 25.7, FG: 0.433, ThreeP: 0.367, FT: 0.859 },
+                { season: "2024-25", PTS: 24.2, FG: 0.411, ThreeP: 0.340, FT: 0.875 }
+            ],
+            'Zion Williamson': [
+                { season: "2003-04", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2004-05", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2005-06", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2006-07", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2007-08", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2008-09", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2009-10", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2010-11", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2011-12", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2012-13", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2013-14", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2014-15", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2015-16", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2016-17", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2017-18", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+                { season: "2018-19", PTS: 0.0, FG: 0.0, ThreeP: 0.0, FT: 0.0 },
+
+                { season: "2019-20", PTS: 22.5, FG: 0.583, ThreeP: 0.425, FT: 0.640 },
+                { season: "2020-21", PTS: 27.0, FG: 0.611, ThreeP: 0.333, FT: 0.698 },
+                { season: "2022-23", PTS: 26.0, FG: 0.606, ThreeP: 0.333, FT: 0.714 },
+                { season: "2023-24", PTS: 22.9, FG: 0.570, ThreeP: 0.333, FT: 0.700 },
+                { season: "2024-25", PTS: 24.6, FG: 0.570, ThreeP: 0.350, FT: 0.720 }
+            ],
+            'LeBron James': [
+                { season: "2003-04", PTS: 20.9, FG: 0.417, ThreeP: 0.290, FT: 0.754 },
+                { season: "2004-05", PTS: 27.2, FG: 0.472, ThreeP: 0.351, FT: 0.750 },
+                { season: "2005-06", PTS: 31.4, FG: 0.480, ThreeP: 0.335, FT: 0.738 },
+                { season: "2006-07", PTS: 27.3, FG: 0.476, ThreeP: 0.319, FT: 0.698 },
+                { season: "2007-08", PTS: 30.0, FG: 0.484, ThreeP: 0.315, FT: 0.712 },
+                { season: "2008-09", PTS: 28.4, FG: 0.489, ThreeP: 0.344, FT: 0.780 },
+                { season: "2009-10", PTS: 29.7, FG: 0.503, ThreeP: 0.333, FT: 0.767 },
+                { season: "2010-11", PTS: 26.7, FG: 0.510, ThreeP: 0.330, FT: 0.759 },
+                { season: "2011-12", PTS: 27.1, FG: 0.531, ThreeP: 0.362, FT: 0.771 },
+                { season: "2012-13", PTS: 26.8, FG: 0.565, ThreeP: 0.406, FT: 0.753 },
+                { season: "2013-14", PTS: 27.1, FG: 0.567, ThreeP: 0.379, FT: 0.750 },
+                { season: "2014-15", PTS: 25.3, FG: 0.488, ThreeP: 0.354, FT: 0.710 },
+                { season: "2015-16", PTS: 25.3, FG: 0.520, ThreeP: 0.309, FT: 0.731 },
+                { season: "2016-17", PTS: 26.4, FG: 0.548, ThreeP: 0.363, FT: 0.674 },
+                { season: "2017-18", PTS: 27.5, FG: 0.542, ThreeP: 0.367, FT: 0.731 },
+                { season: "2018-19", PTS: 27.4, FG: 0.510, ThreeP: 0.339, FT: 0.665 },
+                { season: "2019-20", PTS: 25.3, FG: 0.493, ThreeP: 0.348, FT: 0.693 },
+                { season: "2020-21", PTS: 25.0, FG: 0.513, ThreeP: 0.365, FT: 0.698 },
+                { season: "2021-22", PTS: 30.3, FG: 0.524, ThreeP: 0.359, FT: 0.756 },
+                { season: "2022-23", PTS: 28.9, FG: 0.500, ThreeP: 0.321, FT: 0.767 },
+                { season: "2023-24", PTS: 25.7, FG: 0.540, ThreeP: 0.410, FT: 0.754 }
+            ]
+        };
+
+        // Chart instances
+        let charts = {
+            pts: null,
+            fg: null,
+            threep: null,
+            ft: null
+        };
+
+        // Initialize selectors
+        function initializeSelectors() {
+            const player1Select = document.getElementById('player1');
+            const player2Select = document.getElementById('player2');
+            
+            Object.keys(playersData).forEach(playerName => {
+                const option1 = document.createElement('option');
+                option1.value = playerName;
+                option1.textContent = playerName;
+                player1Select.appendChild(option1);
+
+                const option2 = document.createElement('option');
+                option2.value = playerName;
+                option2.textContent = playerName;
+                player2Select.appendChild(option2);
+            });
+
+            player1Select.addEventListener('change', updateCharts);
+            player2Select.addEventListener('change', updateCharts);
+        }
+
+        // Color schemes for players
+        const colorSchemes = {
+            player1: {
+                primary: 'rgba(52, 152, 219, 1)',
+                secondary: 'rgba(52, 152, 219, 0.2)'
+            },
+            player2: {
+                primary: 'rgba(231, 76, 60, 1)',
+                secondary: 'rgba(231, 76, 60, 0.2)'
+            }
+        };
+
+        // Create chart configuration
+        function createChartConfig(title, datasets) {
+            return {
+                type: 'line',
+                data: {
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: false
+                        },
+                        legend: {
+                            display: true,
+                            position: 'top',
+                            labels: {
+                                usePointStyle: true,
+                                padding: 20,
+                                font: {
+                                    size: 12,
+                                    weight: 'bold'
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.dataset.label;
+                                    const value = context.parsed.y;
+                                    if (title.includes('Percentage')) {
+                                        return `${label}: ${(value * 100).toFixed(1)}%`;
+                                    }
+                                    return `${label}: ${value.toFixed(1)} PPG`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            type: 'category',
+                            title: {
+                                display: true,
+                                text: 'Season',
+                                font: {
+                                    size: 14,
+                                    weight: 'bold'
+                                }
+                            },
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.1)'
+                            }
+                        },
+                        y: {
+                            beginAtZero: title.includes('Points') ? true : false,
+                            min: title.includes('Percentage') ? 0 : undefined,
+                            max: title.includes('Percentage') ? 1 : undefined,
+                            title: {
+                                display: true,
+                                text: title.includes('Percentage') ? 'Percentage' : 'Points Per Game',
+                                font: {
+                                    size: 14,
+                                    weight: 'bold'
+                                }
+                            },
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.1)'
+                            },
+                            ticks: {
+                                callback: function(value) {
+                                    if (title.includes('Percentage')) {
+                                        return (value * 100).toFixed(1) + '%';
+                                    }
+                                    return value.toFixed(1);
+                                },
+                                stepSize: title.includes('Percentage') ? 0.1 : undefined
+                            }
+                        }
+                    },
+                    interaction: {
+                        intersect: false,
+                        mode: 'index'
+                    },
+                    elements: {
+                        line: {
+                            tension: 0.4,
+                            borderWidth: 3
+                        },
+                        point: {
+                            radius: 5,
+                            hoverRadius: 8,
+                            borderWidth: 2
+                        }
+                    }
+                }
+            };
+        }
+
+        // Get all unique seasons and sort them chronologically
+        function getAllSeasonsChronological() {
+            const allSeasons = new Set();
+            Object.values(playersData).forEach(playerData => {
+                playerData.forEach(season => allSeasons.add(season.season));
+            });
+            
+            return Array.from(allSeasons).sort((a, b) => {
+                const yearA = parseInt(a.split('-')[0]);
+                const yearB = parseInt(b.split('-')[0]);
+                return yearA - yearB;
+            });
+        }
+
+        // Update all charts
+        function updateCharts() {
+            const player1Name = document.getElementById('player1').value;
+            const player2Name = document.getElementById('player2').value;
+
+            if (!player1Name && !player2Name) {
+                destroyAllCharts();
+                return;
+            }
+
+            const allSeasons = getAllSeasonsChronological();
+            const datasets = {
+                pts: [],
+                fg: [],
+                threep: [],
+                ft: []
+            };
+
+            // Add player 1 data
+            if (player1Name && playersData[player1Name]) {
+                const data1 = playersData[player1Name];
+                const seasonDataMap = {};
+                data1.forEach(d => seasonDataMap[d.season] = d);
+                
+                datasets.pts.push({
+                    label: player1Name,
+                    data: allSeasons.map(season => ({
+                        x: season,
+                        y: seasonDataMap[season] ? seasonDataMap[season].PTS : null
+                    })).filter(d => d.y !== null),
+                    borderColor: colorSchemes.player1.primary,
+                    backgroundColor: colorSchemes.player1.secondary,
+                    fill: false
+                });
+
+                datasets.fg.push({
+                    label: player1Name,
+                    data: allSeasons.map(season => ({
+                        x: season,
+                        y: seasonDataMap[season] ? seasonDataMap[season].FG : null
+                    })).filter(d => d.y !== null),
+                    borderColor: colorSchemes.player1.primary,
+                    backgroundColor: colorSchemes.player1.secondary,
+                    fill: false
+                });
+
+                datasets.threep.push({
+                    label: player1Name,
+                    data: allSeasons.map(season => ({
+                        x: season,
+                        y: seasonDataMap[season] ? seasonDataMap[season].ThreeP : null
+                    })).filter(d => d.y !== null),
+                    borderColor: colorSchemes.player1.primary,
+                    backgroundColor: colorSchemes.player1.secondary,
+                    fill: false
+                });
+
+                datasets.ft.push({
+                    label: player1Name,
+                    data: allSeasons.map(season => ({
+                        x: season,
+                        y: seasonDataMap[season] ? seasonDataMap[season].FT : null
+                    })).filter(d => d.y !== null),
+                    borderColor: colorSchemes.player1.primary,
+                    backgroundColor: colorSchemes.player1.secondary,
+                    fill: false
+                });
+            }
+
+            // Add player 2 data
+            if (player2Name && playersData[player2Name]) {
+                const data2 = playersData[player2Name];
+                const seasonDataMap = {};
+                data2.forEach(d => seasonDataMap[d.season] = d);
+                
+                datasets.pts.push({
+                    label: player2Name,
+                    data: allSeasons.map(season => ({
+                        x: season,
+                        y: seasonDataMap[season] ? seasonDataMap[season].PTS : null
+                    })).filter(d => d.y !== null),
+                    borderColor: colorSchemes.player2.primary,
+                    backgroundColor: colorSchemes.player2.secondary,
+                    fill: false
+                });
+
+                datasets.fg.push({
+                    label: player2Name,
+                    data: allSeasons.map(season => ({
+                        x: season,
+                        y: seasonDataMap[season] ? seasonDataMap[season].FG : null
+                    })).filter(d => d.y !== null),
+                    borderColor: colorSchemes.player2.primary,
+                    backgroundColor: colorSchemes.player2.secondary,
+                    fill: false
+                });
+
+                datasets.threep.push({
+                    label: player2Name,
+                    data: allSeasons.map(season => ({
+                        x: season,
+                        y: seasonDataMap[season] ? seasonDataMap[season].ThreeP : null
+                    })).filter(d => d.y !== null),
+                    borderColor: colorSchemes.player2.primary,
+                    backgroundColor: colorSchemes.player2.secondary,
+                    fill: false
+                });
+
+                datasets.ft.push({
+                    label: player2Name,
+                    data: allSeasons.map(season => ({
+                        x: season,
+                        y: seasonDataMap[season] ? seasonDataMap[season].FT : null
+                    })).filter(d => d.y !== null),
+                    borderColor: colorSchemes.player2.primary,
+                    backgroundColor: colorSchemes.player2.secondary,
+                    fill: false
+                });
+            }
+
+            // Create/update charts
+            updateChart('ptsChart', 'pts', 'Points Per Game', datasets.pts);
+            updateChart('fgChart', 'fg', 'Field Goal Percentage', datasets.fg);
+            updateChart('threepChart', 'threep', 'Three Point Percentage', datasets.threep);
+            updateChart('ftChart', 'ft', 'Free Throw Percentage', datasets.ft);
+        }
+
+        // Update individual chart
+        function updateChart(canvasId, chartKey, title, datasets, orderedSeasons) {
+            const ctx = document.getElementById(canvasId).getContext('2d');
+            
+            if (charts[chartKey]) {
+                charts[chartKey].destroy();
+            }
+
+            if (datasets.length === 0 || !orderedSeasons || orderedSeasons.length === 0) {
+                // Create empty chart with message
+                charts[chartKey] = new Chart(ctx, {
+                    type: 'line',
+                    data: { datasets: [] },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: { enabled: false }
+                        },
+                        scales: {
+                            x: { display: false },
+                            y: { display: false }
+                        }
+                    }
+                });
+                return;
+            }
+
+            // Calculate appropriate y-axis range for percentage charts
+            let yAxisConfig = {
+                beginAtZero: title.includes('Points') ? true : false,
+                title: {
+                    display: true,
+                    text: title.includes('Percentage') ? 'Percentage' : 'Points Per Game',
+                    font: {
+                        size: 14,
+                        weight: 'bold'
+                    }
+                },
+                grid: {
+                    color: 'rgba(0, 0, 0, 0.1)'
+                },
+                ticks: {
+                    callback: function(value) {
+                        if (title.includes('Percentage')) {
+                            return (value * 100).toFixed(1) + '%';
+                        }
+                        return value.toFixed(1);
+                    }
+                }
+            };
+
+            // Set appropriate ranges for percentage charts
+            if (title.includes('Percentage')) {
+                const allValues = datasets.flatMap(dataset => dataset.data.filter(v => v !== null));
+                const minVal = Math.min(...allValues);
+                const maxVal = Math.max(...allValues);
+                const padding = (maxVal - minVal) * 0.1;
+                
+                yAxisConfig.min = Math.max(0, minVal - padding);
+                yAxisConfig.max = Math.min(1, maxVal + padding);
+                yAxisConfig.ticks.stepSize = 0.05;
+            }
+
+            const config = createChartConfig(title, datasets, orderedSeasons);
+            config.options.scales.y = yAxisConfig;
+            
+            charts[chartKey] = new Chart(ctx, config);
+        }
+
+        // Destroy all charts
+        function destroyAllCharts() {
+            Object.keys(charts).forEach(key => {
+                if (charts[key]) {
+                    charts[key].destroy();
+                    charts[key] = null;
+                }
+            });
+        }
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeSelectors();
+        });
+    </script>
+</body>
+</html>
